@@ -18,7 +18,7 @@ const verifyJWT = (req, res, next) => {
   const token = authorization.split(' ')[1];
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    if(err){
+    if (err) {
       return res.status(401).send({ error: true, message: 'unauthorized access' })
     }
     req.decoded = decoded;
@@ -75,6 +75,22 @@ async function run() {
       res.send(result);
     });
 
+    // security layer: verifyJWT
+    // email same
+    // check admin
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role === 'admin' }
+      res.send(result);
+    })
+
     app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -113,7 +129,7 @@ async function run() {
       }
 
       const decodedEmail = req.decoded.email;
-      if(email !== decodedEmail){
+      if (email !== decodedEmail) {
         return res.status(403).send({ error: true, message: 'porviden access' })
       }
 
