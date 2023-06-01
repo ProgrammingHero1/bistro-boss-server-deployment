@@ -252,7 +252,7 @@ async function run() {
      * 7. for each category use reduce to get the total amount spent on this category
      * 
     */
-    app.get('/order-stats', async(req, res) =>{
+    app.get('/order-stats', verifyJWT, verifyAdmin, async(req, res) =>{
       const pipeline = [
         {
           $lookup: {
@@ -269,7 +269,15 @@ async function run() {
           $group: {
             _id: '$menuItemsData.category',
             count: { $sum: 1 },
-            totalPrice: { $sum: '$menuItemsData.price' }
+            total: { $sum: '$menuItemsData.price' }
+          }
+        },
+        {
+          $project: {
+            category: '$_id',
+            count: 1,
+            total: { $round: ['$total', 2] },
+            _id: 0
           }
         }
       ];
